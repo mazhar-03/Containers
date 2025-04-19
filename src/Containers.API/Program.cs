@@ -49,7 +49,7 @@ app.MapPost("/api/containers", (IContainerServiceRepository service, Container c
     }
 });
 
-app.MapDelete("/api/containers/id", (IContainerServiceRepository service, int id) =>
+app.MapDelete("/api/containers/{id}", (IContainerServiceRepository service, int id) =>
 {
     bool success = service.Delete(id);
     return success ? Results.NoContent() : Results.StatusCode(500);
