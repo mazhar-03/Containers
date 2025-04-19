@@ -1,5 +1,11 @@
-var builder = WebApplication.CreateBuilder(args);
+using Containers.Application;
+using Containers.Models;
 
+var builder = WebApplication.CreateBuilder(args);
+var ConnectionString = builder.Configuration.GetConnectionString("UniversityDatabase");
+
+builder.Services.AddTransient<IContainerServiceRepository, ContainerService>(
+    _ => new ContainerService(ConnectionString));
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -16,29 +22,39 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
+app.MapGet("/api/containers", (IContainerServiceRepository service) =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
+    try
     {
-        var forecast = Enumerable.Range(1, 5).Select(index =>
-                new WeatherForecast
-                (
-                    DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                    Random.Shared.Next(-20, 55),
-                    summaries[Random.Shared.Next(summaries.Length)]
-                ))
-            .ToArray();
-        return forecast;
-    })
-    .WithName("GetWeatherForecast")
-    .WithOpenApi();
+        return Results.Ok(service.GetAllContainers());
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(ex.Message);
+    }
+});
+
+app.MapPost("/api/containers", (IContainerServiceRepository service, Container container) =>
+{
+    try
+    {
+        var success = service.Create(container);
+
+        if (success) return Results.Created();
+        return Results.BadRequest();
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(ex.Message);
+    }
+});
+
+app.MapDelete("/api/containers/id", (IContainerServiceRepository service, int id) =>
+{
+    bool success = service.Delete(id);
+    return success ? Results.NoContent() : Results.StatusCode(500);
+});
+
+
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
