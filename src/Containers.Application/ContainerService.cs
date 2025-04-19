@@ -71,7 +71,7 @@ public class ContainerService : IContainerServiceRepository
     public bool Delete(int id)
     {
         var deleteQuery = "DELETE FROM Containers WHERE ID = @id";
-        int countRowsDelete = -1;
+        int countRowsDelete = 0;
         
         using (SqlConnection connection = new SqlConnection(_connectionString))
         {
@@ -81,6 +81,6 @@ public class ContainerService : IContainerServiceRepository
             connection.Open();
             countRowsDelete = command.ExecuteNonQuery();
         }
-        return countRowsDelete != -1;
+        return countRowsDelete > 0;
     }
 }
